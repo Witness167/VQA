@@ -11,17 +11,29 @@ class AAM(nn.Module):
 
     def __init__(self, __C):
         super(AAM, self).__init__()
-        self.linear_fcd_SA_mul = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
-        self.linear_fcd_GA_mul = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
-        self.sigmoid = nn.Sigmoid()
+        self.linear_S_avgPool = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
+        self.linear_S_qt = nn.Linear(4, __C.HIDDEN_SIZE)
+        self.linear_H_S = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
+        self.linear_g_H = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
 
-    def forward(self, x, x_SA, x_GA):
-        fcd_x_SA = self.sigmoid(self.linear_fcd_SA_mul(x * x_SA)).unsqueeze(-2)
-        fcd_x_GA = self.sigmoid(self.linear_fcd_GA_mul(x * x_GA)).unsqueeze(-2)
-        fcd_x = torch.softmax(torch.cat((fcd_x_SA, fcd_x_GA), dim=-2), dim=-2) #{bs, n, 2d}
-        fcd_x_SA = fcd_x[:, :, 0, :]
-        fcd_x_GA = fcd_x[:, :, 1, :]
-        return fcd_x_SA, fcd_x_GA
+        self.sigmoid_S = nn.Sigmoid()
+        self.sigmoid_H = nn.Sigmoid()
+        self.sigmoid_g = nn.Sigmoid()
+
+    def forward(self, x_update, x_original, G, Question_Type):
+        """
+        :param x_update:
+        :param x_original:
+        :param G: question and image global information
+        :param Question_Type: question-type information
+        :return:
+        """
+        S = self.sigmoid_S(self.linear_S_avgPool(torch.sum(x_original, dim=1) / 14) * torch.add(G, self.linear_S_qt(Question_Type)))
+        H = self.sigmoid_H(self.linear_H_S(S))
+        O = (torch.sum(x_update, dim=1) / 14) * H
+        g = self.sigmoid_g(self.linear_g_H(O))
+
+        return g
 
 # ------------------------------------------------
 # ---- AI ----
@@ -62,7 +74,7 @@ class AI(nn.Module):
             self.mhatt2(y, y, x_update, y_mask)
         ))
 
-        g_AA = self.AAM(x_update, x, G, Question_Type)
+        g_AA = self.AAM(x_update, x, G, Question_Type).unsqueeze(-2)
 
         x_output = g_AA * x_update + x
 
@@ -100,7 +112,8 @@ class AIN(nn.Module):
 
         Q_Global = torch.sigmoid(self.linear_q_global(torch.sum(x, dim = 1) / 14))
         I_Global = torch.sigmoid(self.linear_imgae_global(torch.sum(x, dim = 1) / 14))
-        G = torch.cat([Q_Global, I_Global], 1)
+        #G = torch.cat([Q_Global, I_Global], 1)
+        G = torch.add(Q_Global, I_Global)
         Question_Type = self.linear_question_type(Q_Global)
 
         for i, dec in enumerate(self.dec_list):
