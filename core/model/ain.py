@@ -110,10 +110,13 @@ class AIN(nn.Module):
         for enc in self.enc_list:
             x = enc(x, x_mask)
 
+        # get the global information of question and image
         Q_Global = torch.sigmoid(self.linear_q_global(torch.sum(x, dim = 1) / 14))
         I_Global = torch.sigmoid(self.linear_imgae_global(torch.sum(x, dim = 1) / 14))
         #G = torch.cat([Q_Global, I_Global], 1)
+
         G = torch.add(Q_Global, I_Global)
+        # question type information is the condition of
         Question_Type = self.linear_question_type(Q_Global)
 
         for i, dec in enumerate(self.dec_list):
