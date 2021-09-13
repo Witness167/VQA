@@ -100,6 +100,7 @@ class AIN(nn.Module):
         self.linear_q_global = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
         self.linear_imgae_global = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
         self.linear_question_type = nn.Linear(__C.HIDDEN_SIZE, 4)
+        self.linear_image_ei = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
 
     def forward(self, x, y, x_mask, y_mask):
         """
@@ -111,11 +112,16 @@ class AIN(nn.Module):
             x = enc(x, x_mask)
 
         # get the global information of question and image
-        Q_Global = torch.sigmoid(self.linear_q_global(torch.sum(x, dim = 1) / 14))
-        I_Global = torch.sigmoid(self.linear_imgae_global(torch.sum(x, dim = 1) / 14))
-        #G = torch.cat([Q_Global, I_Global], 1)
+        Q_Global = x[ :, 0, :] + x[ :, -1, :]
+        Q_Global = self.linear_q_global(Q_Global)
 
-        G = torch.add(Q_Global, I_Global)
+        I_pooling = torch.sum(y, dim = 1) / 14
+
+        I_ei = torch.tanh(torch.sum(torch.mul(self.linear_image_ei(y), I_pooling.unsqueeze(-2).repeat(1,100,1)), dim = -1))
+        I_ei = torch.softmax(I_ei, 1)
+        I_Global = self.linear_imgae_global(torch.sum(torch.mul(I_ei.unsqueeze(-1).repeat(1, 1, 512), y) / 100, dim = 1))
+        G = torch.tanh(torch.add(Q_Global, I_Global))
+
         # question type information is the condition of
         Question_Type = self.linear_question_type(Q_Global)
 

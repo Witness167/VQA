@@ -147,5 +147,8 @@ if __name__ == '__main__':
     execution.run(__C.RUN_MODE)
 
 
+# test
+# python run.py --RUN='train' --VERSION='ain-test' --GPU='0' --SPLIT='train' --BACKBONE=2 --LAYER=1
+
 # 运行脚本
 # python run.py --RUN='train' --VERSION='ain-test' --GPU='0' --SPLIT='train' --BACKBONE=2 --LAYER=6
