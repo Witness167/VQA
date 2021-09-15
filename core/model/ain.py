@@ -30,10 +30,9 @@ class AAM(nn.Module):
         """
         S = self.sigmoid_S(self.linear_S_avgPool(torch.sum(x_original, dim=1) / 14) * torch.add(G, self.linear_S_qt(Question_Type)))
         H = self.sigmoid_H(self.linear_H_S(S))
-        O = (torch.sum(x_update, dim=1) / 14) * H
-        g = self.sigmoid_g(self.linear_g_H(O))
+        O = self.sigmoid_g(torch.sum(x_update, dim=1) / 14) * H
 
-        return g
+        return O
 
 # ------------------------------------------------
 # ---- AI ----
