@@ -28,8 +28,11 @@ class AAM(nn.Module):
         :param Question_Type: question-type information
         :return:
         """
-        S = self.sigmoid_S(self.linear_S_avgPool(torch.sum(x_original, dim=1) / 14) * torch.add(G, self.linear_S_qt(Question_Type)))
+        #S = self.sigmoid_S(self.linear_S_avgPool(torch.sum(x_original, dim=1) / 14) * torch.add(G, self.linear_S_qt(Question_Type)))
+        S = self.sigmoid_S(torch.add(self.linear_S_avgPool(torch.sum(x_original, dim=1) / 14), torch.add(G, self.linear_S_qt(Question_Type))))
+        #S = torch.tanh(self.linear_S_avgPool(torch.sum(x_original, dim=1) / 14) * torch.add(G, self.linear_S_qt(Question_Type)))
         H = self.sigmoid_H(self.linear_H_S(S))
+        #H = torch.tanh(self.linear_H_S(S))
         O = self.sigmoid_g(torch.sum(x_update, dim=1) / 14) * H
 
         return O
@@ -96,7 +99,7 @@ class AIN(nn.Module):
         self.enc_list = nn.ModuleList([SA(__C) for _ in range(__C.LAYER)])
         self.dec_list = nn.ModuleList([AI(__C) for _ in range(__C.LAYER)])
 
-        self.linear_q_global = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
+        #self.linear_q_global = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
         self.linear_imgae_global = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
         self.linear_question_type = nn.Linear(__C.HIDDEN_SIZE, 4)
         self.linear_image_ei = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE)
@@ -112,7 +115,7 @@ class AIN(nn.Module):
 
         # get the global information of question and image
         Q_Global = x[ :, 0, :] + x[ :, -1, :]
-        Q_Global = self.linear_q_global(Q_Global)
+        #Q_Global = self.linear_q_global(Q_Global)
 
         I_pooling = torch.sum(y, dim = 1) / 14
 

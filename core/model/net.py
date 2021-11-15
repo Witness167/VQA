@@ -5,9 +5,18 @@
 # --------------------------------------------------------
 
 from core.model.net_utils import FC, MLP, LayerNorm, AttFlat
+
+from core.model.dcn.DCN import DCN
+from core.model.DFAF import DFAF
+from core.model.MUAN import MUAN
+from core.model.MCAN import MCAN
+from core.model.SelRes import SelRes
+from core.model.MEDAN import MEDAN
+from core.model.MCAoAN import MCAoAN
 from core.model.mca import MCA_ED
-from core.model.fuin import FUIN
+
 from core.model.ain import AIN
+from core.model.fuin import FUIN
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,17 +56,38 @@ class Net(nn.Module):
         # ---- Backbone Params ----
         # ------------------------
         switch = {
-            0: 'MCAED',
-            1: 'FUIN',
-            2: 'AIN'
+            0: 'BUTD',
+            1: 'DFAF',
+            2: 'MUAN',
+            3: 'MCAN',
+            4: 'SelRes',
+            5: 'MEDAN',
+            6: 'MCAoAN',
+            7: 'MCANed',
+            8: 'DPCM',
+            9: 'DUIM',
         }
 
         if __C.BACKBONE == 0:
-            self.backbone = MCA_ED(__C)
+            self.backbone = DCN(__C)
         elif __C.BACKBONE == 1:
-            self.backbone = FUIN(__C)
+            self.backbone = DFAF(__C)
         elif __C.BACKBONE == 2:
+            self.backbone = MUAN(__C)
+        elif __C.BACKBONE == 3:
+            self.backbone = MCAN(__C)
+        elif __C.BACKBONE == 4:
+            self.backbone = SelRes(__C)
+        elif __C.BACKBONE == 5:
+            self.backbone = MEDAN(__C)
+        elif __C.BACKBONE == 6:
+            self.backbone = MCAoAN(__C)
+        elif __C.BACKBONE == 7:
+            self.backbone = MCA_ED(__C)
+        elif __C.BACKBONE == 8:
             self.backbone = AIN(__C)
+        elif __C.BACKBONE == 9:
+            self.backbone = FUIN(__C)
         else:
             print("backbone wrong!")
             exit()

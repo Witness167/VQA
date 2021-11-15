@@ -148,7 +148,11 @@ if __name__ == '__main__':
 
 
 # test
-# python run.py --RUN='train' --VERSION='ain-test' --GPU='0' --SPLIT='train' --BACKBONE=2 --LAYER=1
+# 原有的不加ain的baseline模型 看看效果
+# python run.py --RUN='train' --VERSION='final-test' --GPU='3' --SPLIT='train' --BACKBONE=9 --LAYER=1
 
 # 运行脚本
-# python run.py --RUN='train' --VERSION='ain-test' --GPU='0' --SPLIT='train' --BACKBONE=2 --LAYER=6
+# 0 1 - ain中全是sigmoid
+# python run.py --RUN='train' --VERSION='ain-1' --GPU='1' --SPLIT='train' --BACKBONE=2 --LAYER=6
+# 2 3 - ain中现有环境的获得使用+
+# python run.py --RUN='train' --VERSION='ain-3' --GPU='3' --SPLIT='train' --BACKBONE=2 --LAYER=6

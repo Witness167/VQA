@@ -1,15 +1,13 @@
 
 
-from core.model.net_utils import FC, MLP, LayerNorm, MHAtt, FFN, SA
+from core.model.net_utils import LayerNorm, MHAtt, FFN, SA
 
 import torch.nn as nn
-import torch.nn.functional as F
-import torch, math
-import numpy as np
+import torch
 torch.set_printoptions(profile="full")
 
 # ------------------------------------------------
-# ---- FUI ----
+# ---- FAA 细粒度自适应激活模块 ----
 # ------------------------------------------------
 
 class FAA(nn.Module):
@@ -61,6 +59,12 @@ class FUI(nn.Module):
 
         self.faa = FAA(__C)
 
+        input_dim = [__C.HIDDEN_SIZE, __C.HIDDEN_SIZE]
+        #self.fusion = MFB(input_dim, __C.HIDDEN_SIZE)
+
+        self.linear_fusion_SA = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE * 8)
+        self.linear_fusion_GA = nn.Linear(__C.HIDDEN_SIZE, __C.HIDDEN_SIZE * 8)
+
     def forward(self, x, y, x_mask, y_mask):
 
         # parallel interaction (PI)
@@ -69,8 +73,16 @@ class FUI(nn.Module):
 
         # FAA
         fcd_x_SA, fcd_x_GA = self.faa(x, x_SA, x_GA)
-        x_fmf = fcd_x_SA * x_SA + fcd_x_GA * x_GA
-        x_fmf = self.norm_fmf(x + self.dropout_fmf(x_fmf))
+
+        #fusion
+        x_SA = self.linear_fusion_SA(fcd_x_SA * x_SA).reshape([64, 100, 8, -1])
+        x_GA = self.linear_fusion_GA(fcd_x_GA * x_GA).reshape([64, 100, 8, -1])
+
+        x_fmf = torch.sum(x_SA * x_GA, dim = -2)
+
+        #x_fmf = self.fusion(x_out)
+        #print(x_fmf.size())
+        #x_fmf = self.norm_fmf(x + self.dropout_fmf(x_fmf))
         x_output = self.norm_ffn(x_fmf + self.dropout_ffn(self.ffn(x_fmf)))
 
         return x_output
